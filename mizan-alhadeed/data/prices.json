@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-20",
+  "updatedAt": "2026-11-20T16:21:30",
+  "source": "تحديث يومي مباشر للسوق المصري • الدولار 53.81 ج.م",
+  "sourceType": "live_server",
+  "usdEgp": 53.81,
+  "isCustom": false,
+  "steel": {
+    "light": {
+      "price": 49100
+    },
+    "medium": {
+      "price": 52300
+    },
+    "heavy": {
+      "price": 56500
+    }
+  },
+  "sheets": {
+    "galvanized_04": {
+      "price": 230
+    },
+    "galvanized_05": {
+      "price": 285
+    },
+    "colored_05": {
+      "price": 345
+    },
+    "colored_07": {
+      "price": 455
+    },
+    "sandwich_5": {
+      "price": 865
+    },
+    "sandwich_10": {
+      "price": 1245
+    }
+  },
+  "accessories": {
+    "paintPerTon": 1450,
+    "fastenersPerM2": 18,
+    "weldingPerTon": 950,
+    "anchorSetPerCol": 420,
+    "gutterPerMeter": 280
+  },
+  "history": [
+    {
+      "date": "2026-11-14",
+      "label": "14/11",
+      "mediumSteel": 51650
+    },
+    {
+      "date": "2026-11-15",
+      "label": "15/11",
+      "mediumSteel": 51900
+    },
+    {
+      "date": "2026-11-16",
+      "label": "16/11",
+      "mediumSteel": 51900
+    },
+    {
+      "date": "2026-11-17",
+      "label": "17/11",
+      "mediumSteel": 52150
+    },
+    {
+      "date": "2026-11-18",
+      "label": "18/11",
+      "mediumSteel": 52400
+    },
+    {
+      "date": "2026-11-19",
+      "label": "19/11",
+      "mediumSteel": 52200
+    },
+    {
+      "date": "2026-11-20",
+      "label": "20/11",
+      "mediumSteel": 52300
+    }
+  ]
+}

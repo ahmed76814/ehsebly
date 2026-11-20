@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ميزان الحديد — حاسبة ميزانية الجمالونات والهناجر بأسعار السوق المصري اليوم</title>
+  <meta name="description" content="حاسبة احترافية لورش الحدادة وتصنيع الجمالونات في مصر: احسب كمية الحديد بالطن، الصاج بالمتر، وميزانية الخامات بأسعار السوق المصري اليومية مع إضافة المصنعية وطباعة عرض سعر." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Cpath d='M4 15L16 6L28 15M6 15V26M26 15V26M6 15H26M16 6V15' stroke='%23f59e0b' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- شريط أسعار الحديد والصاج اليومية في السوق المصري -->
+  <div class="market-bar" role="region" aria-label="أسعار الحديد اليوم في مصر">
+    <div class="market-bar-inner">
+      <div class="market-live-badge">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span>أسعار السوق المصري اليوم:</span>
+        <span id="marketDateLabel" class="tabular">—</span>
+      </div>
+
+      <div class="market-ticker-items tabular" id="marketTickerItems">
+        <span class="ticker-chip">علب وزوايا: <strong id="tickLight">—</strong> ج/طن</span>
+        <span class="ticker-chip">كمر متوسط: <strong id="tickMedium">—</strong> ج/طن</span>
+        <span class="ticker-chip">كمر ثقيل: <strong id="tickHeavy">—</strong> ج/طن</span>
+        <span class="ticker-chip">صاج إيكون 0.5: <strong id="tickSheet">—</strong> ج/م²</span>
+      </div>
+
+      <div class="market-actions">
+        <button type="button" class="market-btn" id="btnRefreshPrices" title="تحديث أسعار اليوم تلقائياً">
+          <span id="refreshSpinner">↻</span> تحديث اليوم
+        </button>
+        <button type="button" class="market-btn accent workshop-only" id="btnOpenPriceModal">
+          ✎ جدول وتعديل الأسعار
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الهيدر الرئيسي -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <!-- أيقونة جمالون معدني -->
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <path d="M3 13L14 5L25 13" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 13V24M23 13V24M5 13H23M14 5V13M9.5 13L14 5L18.5 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 24H8M20 24H26" stroke="#f8fafc" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title" id="headerWorkshopName">ميزان الحديد للجمالونات</h1>
+          <p class="brand-sub" id="headerWorkshopSub">حاسبة ميزانية الهناجر والجمالونات بأسعار السوق المصري اليومية</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- التبديل بين وضع صاحب الورشة ووضع معاينة العميل -->
+        <div class="mode-switch" id="roleSwitchWrap" role="group" aria-label="وضع التشغيل">
+          <button type="button" class="mode-btn active" data-role="workshop" id="btnRoleWorkshop">
+            🔧 وضع صاحب الورشة
+          </button>
+          <button type="button" class="mode-btn" data-role="client" id="btnRoleClient">
+            👤 معاينة رابط العميل
+          </button>
+        </div>
+
+        <button type="button" class="icon-btn workshop-only" id="btnOpenHistory" title="المقايسات المحفوظة">
+          📋 السجل <span class="badge-count" id="savedQuotesCount">0</span>
+        </button>
+
+        <button type="button" class="icon-btn workshop-only" id="btnOpenWorkshopSettings" title="إعدادات الورشة والواتساب">
+          ⚙ بيانات الورشة
+        </button>
+
+        <button type="button" class="icon-btn" id="btnToggleTheme" title="تبديل الوضع الليلي / النهاري">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- شريط توضيحي يظهر في وضع رابط العميل -->
+  <div class="client-banner hidden" id="clientBanner">
+    <div class="client-banner-inner">
+      <div>
+        <strong>👋 أهلاً بك في حاسبة <span id="clientBannerWorkshop">ورشة الحدادة</span>!</strong>
+        <span>أدخل مقاسات الجمالون المطلوب لمعرفة ميزانية الخامات التقريبية بأسعار اليوم، ثم أرسل الطلب للورشة لتأكيد السعر النهائي والمصنعية.</span>
+      </div>
+      <button type="button" class="market-btn accent" id="btnClientSendWaTop">
+        📲 إرسال الطلب للورشة واتساب
+      </button>
+    </div>
+  </div>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="app-container">
+    <!-- عمود المدخلات والخيارات -->
+    <section class="inputs-column" aria-label="مواصفات ومقاسات الجمالون">
+
+      <!-- الخطوة 1: الأبعاد -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="step-num">1</span>
+            <div>
+              <h2 class="card-title">أبعاد الجمالون (الطول × العرض × الارتفاع)</h2>
+              <p class="card-subtitle">اكتب المقاسات بالمتر أو اختر مقاساً جاهزاً للتجربة السريعة</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="presets-row" aria-label="مقاسات شائعة">
+            <button type="button" class="preset-pill" data-preset="small">مظلة / مخزن صغير (10×8×4م)</button>
+            <button type="button" class="preset-pill" data-preset="medium">مخزن / ورشة متوسطة (20×12×6م)</button>
+            <button type="button" class="preset-pill" data-preset="large">هنجر مصنع كبير (40×20×8م)</button>
+            <button type="button" class="preset-pill" data-preset="farm">عنبر مزرعة (30×14×4.5م)</button>
+          </div>
+
+          <div class="dims-grid">
+            <div class="dim-box">
+              <div class="dim-label">
+                <label for="inputLength">الطول (L)</label>
+                <span class="dim-unit">متر</span>
+              </div>
+              <div class="dim-input-wrap">
+                <input type="number" id="inputLength" class="dim-input tabular" min="4" max="200" step="0.5" value="20" />
+              </div>
+              <input type="range" id="rangeLength" class="dim-slider" min="4" max="80" step="1" value="20" />
+            </div>
+
+            <div class="dim-box">
+              <div class="dim-label">
+                <label for="inputWidth">العرض / البحر (W)</label>
+                <span class="dim-unit">متر</span>
+              </div>
+              <div class="dim-input-wrap">
+                <input type="number" id="inputWidth" class="dim-input tabular" min="3" max="80" step="0.5" value="12" />
+              </div>
+              <input type="range" id="rangeWidth" class="dim-slider" min="3" max="40" step="0.5" value="12" />
+            </div>
+
+            <div class="dim-box">
+              <div class="dim-label">
+                <label for="inputHeight">ارتفاع العمود (H)</label>
+                <span class="dim-unit">متر</span>
+              </div>
+              <div class="dim-input-wrap">
+                <input type="number" id="inputHeight" class="dim-input tabular" min="2.5" max="20" step="0.5" value="6" />
+              </div>
+              <input type="range" id="rangeHeight" class="dim-slider" min="2.5" max="14" step="0.5" value="6" />
+            </div>
+          </div>
+
+          <div class="area-strip tabular">
+            <span>المساحة الأرضية: <strong id="lblFloorArea">240 م²</strong></span>
+            <span>مساحة السقف الفعلية: <strong id="lblRoofArea">254 م²</strong></span>
+            <span>أعلى ارتفاع (القمة): <strong id="lblPeakHeight">6.7 م</strong></span>
+            <span>عدد الفريمات: <strong id="lblFramesCount">5 فريم (10 أعمدة)</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- الخطوة 2: نوع الجمالون للسقف + نوع الحديد -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="step-num">2</span>
+            <div>
+              <h2 class="card-title">نوع الجمالون ومواصفات الحديد</h2>
+              <p class="card-subtitle">حدد طبيعة الاستخدام (تخزين خفيف أم مصنع ثقيل) ودرجة ثقل الحديد</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="section-label">
+            <span>أولاً: نوع واستخدام الجمالون (للسقف والأحمال)</span>
+          </div>
+          <div class="choice-grid" id="dutyChoices" role="radiogroup" aria-label="نوع الجمالون">
+            <label class="choice-card" data-group="trussDuty" data-value="light">
+              <input type="radio" name="trussDuty" value="light" />
+              <div class="choice-head">
+                <span class="choice-title">خفيف للتخزين</span>
+                <span class="choice-badge">اقتصادي</span>
+              </div>
+              <span class="choice-desc">للمظلات، الجراجات، مخازن التخزين الخفيفة والمزارع</span>
+            </label>
+
+            <label class="choice-card selected" data-group="trussDuty" data-value="medium">
+              <input type="radio" name="trussDuty" value="medium" checked />
+              <div class="choice-head">
+                <span class="choice-title">متوسط للورش والمخازن</span>
+                <span class="choice-badge">الأكثر طلباً</span>
+              </div>
+              <span class="choice-desc">للمخازن التجارية، الورش الصناعية والهناجر القياسية</span>
+            </label>
+
+            <label class="choice-card" data-group="trussDuty" data-value="heavy">
+              <input type="radio" name="trussDuty" value="heavy" />
+              <div class="choice-head">
+                <span class="choice-title">ثقيل للمصانع</span>
+                <span class="choice-badge">أحمال عالية</span>
+              </div>
+              <span class="choice-desc">للمصانع الكبرى، البحور الواسعة أو التجهيز لونش علوي</span>
+            </label>
+          </div>
+
+          <div class="section-label">
+            <span>ثانياً: هل تحتاج حديد ثقيل أم خفيف؟ (نوع القطاعات)</span>
+          </div>
+          <div class="choice-grid" id="steelGradeChoices" role="radiogroup" aria-label="نوع الحديد">
+            <label class="choice-card" data-group="steelGrade" data-value="light">
+              <input type="radio" name="steelGrade" value="light" />
+              <div class="choice-head">
+                <span class="choice-title">حديد خفيف</span>
+                <span class="choice-badge">علب وزوايا</span>
+              </div>
+              <span class="choice-desc">علب مربعة ومستطيلة وزوايا وكمر سيجال خفيف</span>
+              <span class="choice-price tabular" id="cardPriceLight">— ج/طن</span>
+            </label>
+
+            <label class="choice-card selected" data-group="steelGrade" data-value="medium">
+              <input type="radio" name="steelGrade" value="medium" checked />
+              <div class="choice-head">
+                <span class="choice-title">حديد متوسط</span>
+                <span class="choice-badge">كمر IPE</span>
+              </div>
+              <span class="choice-desc">كمر IPE/UPN متوسط ومدادات C/Z قياسية</span>
+              <span class="choice-price tabular" id="cardPriceMedium">— ج/طن</span>
+            </label>
+
+            <label class="choice-card" data-group="steelGrade" data-value="heavy">
+              <input type="radio" name="steelGrade" value="heavy" />
+              <div class="choice-head">
+                <span class="choice-title">حديد ثقيل محمّل</span>
+                <span class="choice-badge">HEA / IPE ثقيل</span>
+              </div>
+              <span class="choice-desc">قطاعات كمر ثقيلة عالية التحمل والعمر الافتراضي</span>
+              <span class="choice-price tabular" id="cardPriceHeavy">— ج/طن</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- الخطوة 3: نوع الصاج وشكل السقف وتقفيل الجوانب -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="step-num">3</span>
+            <div>
+              <h2 class="card-title">نوع الصاج وشكل السقف وتقفيل الأجناب</h2>
+              <p class="card-subtitle">اختر خامة الصاج (مجلفن، ملون إيكون، أو ساندوتش بانل عازل) وتقفيل الجوانب</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="section-label">
+            <span>نوع صاج التغطية</span>
+          </div>
+          <div class="choice-grid cols-2" id="sheetChoices" role="radiogroup" aria-label="نوع الصاج">
+            <label class="choice-card" data-group="sheetType" data-value="galvanized_04">
+              <input type="radio" name="sheetType" value="galvanized_04" />
+              <div class="choice-head">
+                <span class="choice-title">صاج مجلفن معرج 0.4 مم</span>
+                <span class="choice-badge">اقتصادي</span>
+              </div>
+              <span class="choice-desc">مناسب للمظلات وأسقف التخزين الخفيفة</span>
+              <span class="choice-price tabular" id="cardSheet_galvanized_04">— ج/م²</span>
+            </label>
+
+            <label class="choice-card" data-group="sheetType" data-value="galvanized_05">
+              <input type="radio" name="sheetType" value="galvanized_05" />
+              <div class="choice-head">
+                <span class="choice-title">صاج مجلفن معرج 0.5 مم</span>
+                <span class="choice-badge">عملي</span>
+              </div>
+              <span class="choice-desc">تخانة محملة ومقاومة أعلى للصدأ</span>
+              <span class="choice-price tabular" id="cardSheet_galvanized_05">— ج/م²</span>
+            </label>
+
+            <label class="choice-card selected" data-group="sheetType" data-value="colored_05">
+              <input type="radio" name="sheetType" value="colored_05" checked />
+              <div class="choice-head">
+                <span class="choice-title">صاج ملون معرج (إيكون 0.5 مم)</span>
+                <span class="choice-badge">الأشهر بمصر</span>
+              </div>
+              <span class="choice-desc">مدهون إلكتروستاتيك — شكل ممتاز ومقاوم للشمس والمطر</span>
+              <span class="choice-price tabular" id="cardSheet_colored_05">— ج/م²</span>
+            </label>
+
+            <label class="choice-card" data-group="sheetType" data-value="colored_07">
+              <input type="radio" name="sheetType" value="colored_07" />
+              <div class="choice-head">
+                <span class="choice-title">صاج ملون ثقيل (0.7 مم)</span>
+                <span class="choice-badge">محمّل</span>
+              </div>
+              <span class="choice-desc">للمصانع والهناجر الكبيرة والمناطق المفتوحة للرياح</span>
+              <span class="choice-price tabular" id="cardSheet_colored_07">— ج/م²</span>
+            </label>
+
+            <label class="choice-card" data-group="sheetType" data-value="sandwich_5">
+              <input type="radio" name="sheetType" value="sandwich_5" />
+              <div class="choice-head">
+                <span class="choice-title">ساندوتش بانل عازل (5 سم)</span>
+                <span class="choice-badge">عازل للحرارة</span>
+              </div>
+              <span class="choice-desc">طبقتين صاج بينهم فوم بولي يوريثان لعزل الحرارة والصوت</span>
+              <span class="choice-price tabular" id="cardSheet_sandwich_5">— ج/م²</span>
+            </label>
+
+            <label class="choice-card" data-group="sheetType" data-value="sandwich_10">
+              <input type="radio" name="sheetType" value="sandwich_10" />
+              <div class="choice-head">
+                <span class="choice-title">ساندوتش بانل ثقيل (7.5 – 10 سم)</span>
+                <span class="choice-badge">عزل فائق</span>
+              </div>
+              <span class="choice-desc">للمصانع الغذائية وثلاجات التبريد والمخازن المكيفة</span>
+              <span class="choice-price tabular" id="cardSheet_sandwich_10">— ج/م²</span>
+            </label>
+          </div>
+
+          <div class="section-label">
+            <span>شكل سقف الجمالون</span>
+          </div>
+          <div class="choice-grid" id="roofShapeChoices" role="radiogroup" aria-label="شكل السقف">
+            <label class="choice-card selected" data-group="roofShape" data-value="gable">
+              <input type="radio" name="roofShape" value="gable" checked />
+              <div class="choice-head">
+                <span class="choice-title">هرمي (ميلين)</span>
+              </div>
+              <span class="choice-desc">الشكل القياسي لتصريف الأمطار من الجانبين</span>
+            </label>
+
+            <label class="choice-card" data-group="roofShape" data-value="mono">
+              <input type="radio" name="roofShape" value="mono" />
+              <div class="choice-head">
+                <span class="choice-title">ميل واحد (شطف)</span>
+              </div>
+              <span class="choice-desc">اتجاه واحد — مثالي بجوار مبنى قائم</span>
+            </label>
+
+            <label class="choice-card" data-group="roofShape" data-value="arched">
+              <input type="radio" name="roofShape" value="arched" />
+              <div class="choice-head">
+                <span class="choice-title">مقوس (قبة)</span>
+              </div>
+              <span class="choice-desc">ارتفاع إضافي ومقاومة عالية للرياح</span>
+            </label>
+          </div>
+
+          <div class="section-label">
+            <span>تقفيل الجوانب بالصاج</span>
+          </div>
+          <div class="choice-grid" id="wallCladdingChoices" role="radiogroup" aria-label="تقفيل الجوانب">
+            <label class="choice-card selected" data-group="wallCladding" data-value="none">
+              <input type="radio" name="wallCladding" value="none" checked />
+              <div class="choice-head">
+                <span class="choice-title">سقف فقط</span>
+              </div>
+              <span class="choice-desc">مفتوح الجوانب أو سيتم البناء بالطوب</span>
+            </label>
+
+            <label class="choice-card" data-group="wallCladding" data-value="partial">
+              <input type="radio" name="wallCladding" value="partial" />
+              <div class="choice-head">
+                <span class="choice-title">تقفيل جزئي</span>
+              </div>
+              <span class="choice-desc">صاج في الجزء العلوي فوق سور طوب</span>
+            </label>
+
+            <label class="choice-card" data-group="wallCladding" data-value="full">
+              <input type="radio" name="wallCladding" value="full" />
+              <div class="choice-head">
+                <span class="choice-title">تقفيل كامل صاج</span>
+              </div>
+              <span class="choice-desc">تغطية كاملة للـ 4 جوانب مع فتحة بوابة</span>
+            </label>
+          </div>
+
+          <!-- ارتفاع سور الطوب في حالة التقفيل الجزئي -->
+          <div class="sub-option-box hidden" id="brickWallHeightWrap">
+            <div>
+              <strong style="font-size: 0.88rem;">ارتفاع سور المباني (الطوب) أسفل الصاج:</strong>
+              <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">سيتم حساب صاج الأجناب للمسافة العلوية المتبقية فوق سور الطوب فقط</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="number" id="inputBrickHeight" class="form-control tabular" style="width: 90px; text-align: center;" min="0.5" max="10" step="0.5" value="3" />
+              <span style="font-weight: 700; font-size: 0.85rem;">متر</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- خيارات هندسية متقدمة مطوية -->
+      <details class="advanced-panel">
+        <summary>
+          <span>⚙ خيارات هندسية إضافية (نسبة الهالك، ميل السقف، المسافة بين الأعمدة، المزاريب)</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">اضغط للتعديل ▾</span>
+        </summary>
+        <div class="advanced-body">
+          <div class="field-group">
+            <label for="inputSlope">ميل السقف (%)</label>
+            <input type="number" id="inputSlope" class="form-control tabular" min="5" max="30" step="1" value="12" />
+          </div>
+
+          <div class="field-group">
+            <label for="inputBaySpacing">المسافة بين كل جمالون والتاني (الباكية - متر)</label>
+            <input type="number" id="inputBaySpacing" class="form-control tabular" min="3" max="8" step="0.5" value="5" />
+          </div>
+
+          <div class="field-group">
+            <label for="inputSteelWaste">نسبة هالك تقطيع الحديد (%)</label>
+            <input type="number" id="inputSteelWaste" class="form-control tabular" min="0" max="15" step="1" value="5" />
+          </div>
+
+          <div class="field-group">
+            <label for="inputSheetWaste">نسبة تداخل وهالك الصاج (%)</label>
+            <input type="number" id="inputSheetWaste" class="form-control tabular" min="0" max="20" step="1" value="8" />
+          </div>
+
+          <div class="checkbox-row">
+            <label class="check-label">
+              <input type="checkbox" id="chkAccessories" checked />
+              شامل الدهان (برايمر + بوية)، سلك اللحام، مسامير الصاج والأنكر بولت
+            </label>
+            <label class="check-label">
+              <input type="checkbox" id="chkGutters" />
+              إضافة مجاري صرف مياه أمطار (مزاريب صاج محمل)
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <!-- مقاسات القطاعات الاسترشادية المقترحة للحداد -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="step-num">📐</span>
+            <div>
+              <h2 class="card-title">مقاسات القطاعات المقترحة (استرشادية للتنفيذ)</h2>
+              <p class="card-subtitle">تتحدث تلقائياً بناءً على البحر والارتفاع ونوع الحديد المختار</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="specs-grid">
+            <div class="spec-item">
+              <span>قطاع الأعمدة المقترح</span>
+              <strong id="specColumn">—</strong>
+            </div>
+            <div class="spec-item">
+              <span>قطاع المقصات / الجمالون</span>
+              <strong id="specTruss">—</strong>
+            </div>
+            <div class="spec-item">
+              <span>مدادات السقف (Purlins)</span>
+              <strong id="specPurlin">—</strong>
+            </div>
+            <div class="spec-item">
+              <span>قواعد وبليتات التثبيت</span>
+              <strong id="specBasePlate">—</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- عمود المخطط والنتائج والمصنعية -->
+    <aside class="results-column" aria-label="نتائج الميزانية والكميات">
+
+      <!-- المخطط الهندسي التفاعلي المباشر -->
+      <div class="blueprint-card">
+        <div class="blueprint-toolbar">
+          <div class="blueprint-title">
+            <span>📐 المخطط الهندسي المباشر</span>
+          </div>
+          <div class="view-tabs" role="tablist">
+            <button type="button" class="view-tab active" data-view="isometric" id="tabViewIso">منظور ثلاثي الأبعاد</button>
+            <button type="button" class="view-tab" data-view="elevation" id="tabViewElev">مقطع أمامي</button>
+          </div>
+        </div>
+        <div class="blueprint-stage" id="blueprintStage"></div>
+      </div>
+
+      <!-- بطاقات الأرقام الرئيسية (كم طن حديد + كم متر صاج + تكلفة الخامات) -->
+      <div class="kpi-grid tabular">
+        <div class="kpi-card">
+          <div class="kpi-label">إجمالي الحديد المطلوب</div>
+          <div class="kpi-value" id="kpiSteelTons">— طن</div>
+          <div class="kpi-sub" id="kpiSteelKg">— كجم (— كجم/م²)</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-label">إجمالي الصاج المطلوب</div>
+          <div class="kpi-value" id="kpiSheetArea">— م²</div>
+          <div class="kpi-sub" id="kpiSheetCount">حوالي — لوح (طول 6م)</div>
+        </div>
+
+        <div class="kpi-card highlight">
+          <div class="kpi-label">ميزانية الخامات فقط</div>
+          <div class="kpi-value" id="kpiMaterialsCost">— ج.م</div>
+          <div class="kpi-sub" id="kpiMaterialsPerM2">— ج.م / متر مربع</div>
+        </div>
+      </div>
+
+      <!-- تنبيهات هندسية ذكية (تظهر فقط عند الحاجة) -->
+      <div class="notes-stack hidden" id="engineeringNotes"></div>
+
+      <!-- صندوق إضافة المصنعية (الجزء المخصص للحداد / صاحب الورشة) -->
+      <div class="labor-card workshop-only" id="workshopLaborCard">
+        <div class="labor-header">
+          <h3>🔨 إضافة المصنعية وحساب الورشة</h3>
+          <span class="labor-tag">خاص بالحداد / صاحب الورشة</span>
+        </div>
+        <div class="labor-body">
+          <div class="labor-tabs" role="tablist">
+            <button type="button" class="labor-tab active" data-labor-mode="perUnit">بالطن والمتر</button>
+            <button type="button" class="labor-tab" data-labor-mode="lump">مبلغ مقطوع (جنيه)</button>
+            <button type="button" class="labor-tab" data-labor-mode="percent">نسبة مئوية (%)</button>
+          </div>
+
+          <!-- وضع: بالطن + بالمتر -->
+          <div class="labor-inputs-grid" id="laborInputsPerUnit">
+            <div class="field-group">
+              <label for="inputLaborPerTon">مصنعية طن الحديد (تصنيع وتركيب - ج.م)</label>
+              <input type="number" id="inputLaborPerTon" class="form-control tabular" min="0" step="500" value="14500" />
+            </div>
+            <div class="field-group">
+              <label for="inputLaborSheetM2">مصنعية تركيب الصاج (ج.م / م²)</label>
+              <input type="number" id="inputLaborSheetM2" class="form-control tabular" min="0" step="5" value="32" />
+            </div>
+          </div>
+
+          <!-- وضع: مبلغ مقطوع -->
+          <div class="labor-inputs-grid single hidden" id="laborInputsLump">
+            <div class="field-group">
+              <label for="inputLaborLump">أضف مبلغ المصنعية الإجمالي (جنيه مصري)</label>
+              <input type="number" id="inputLaborLump" class="form-control tabular" min="0" step="1000" value="95000" />
+            </div>
+          </div>
+
+          <!-- وضع: نسبة مئوية -->
+          <div class="labor-inputs-grid single hidden" id="laborInputsPercent">
+            <div class="field-group">
+              <label for="inputLaborPercent">نسبة المصنعية من إجمالي الخامات (%)</label>
+              <input type="number" id="inputLaborPercent" class="form-control tabular" min="0" max="150" step="1" value="25" />
+            </div>
+          </div>
+
+          <div class="labor-inputs-grid" style="margin-top: 12px;">
+            <div class="field-group">
+              <label for="inputTransportCost">النقل والونش والتعتيق (اختياري - ج.م)</label>
+              <input type="number" id="inputTransportCost" class="form-control tabular" min="0" step="500" value="0" />
+            </div>
+            <div class="field-group">
+              <label for="inputClientName">اسم العميل (اختياري لعرض السعر)</label>
+              <input type="text" id="inputClientName" class="form-control" placeholder="مثال: أ/ محمود عبد الرحمن" />
+            </div>
+          </div>
+
+          <div style="margin-top: 10px;">
+            <label class="check-label" style="font-size: 0.82rem; color: var(--text-secondary);">
+              <input type="checkbox" id="chkHideLaborDetail" />
+              إخفاء تفصيل بند المصنعية في عرض السعر المطبوع (إظهار السعر النهائي الشامل فقط للعميل)
+            </label>
+          </div>
+
+          <!-- الإجمالي النهائي شامل المصنعية -->
+          <div class="grand-total-box tabular">
+            <div>
+              <div class="grand-total-label">الإجمالي النهائي للعميل (خامات + مصنعية)</div>
+              <div class="grand-total-amount" id="lblGrandTotal">— ج.م</div>
+            </div>
+            <div class="grand-total-meta">
+              <span>سعر المتر المربع شامل: <strong id="lblGrandTotalPerM2">— ج.م/م²</strong></span>
+              <span>إجمالي المصنعية والنقل: <strong id="lblLaborOnlyTotal">— ج.م</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- جدول تفصيل الكميات والتكلفة (المقايسة) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span class="step-num">📊</span>
+            <div>
+              <h2 class="card-title">تفصيل الميزانية والكميات (المقايسة)</h2>
+              <p class="card-subtitle" id="priceSourceNote">محسوبة بأسعار السوق المصري اليوم</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 12px 14px;">
+          <div style="overflow-x: auto;">
+            <table class="boq-table tabular" id="boqTable">
+              <thead>
+                <tr>
+                  <th>البند</th>
+                  <th class="num-col">الكمية</th>
+                  <th class="num-col">التكلفة التقديرية</th>
+                </tr>
+              </thead>
+              <tbody id="boqTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- أزرار الإجراءات: طباعة PDF، واتساب، رابط العميل، حفظ -->
+      <div class="card">
+        <div class="card-body">
+          <div class="actions-grid" id="workshopActionsGrid">
+            <button type="button" class="btn btn-primary" id="btnPrintQuote">
+              🖨 طباعة / عرض سعر PDF
+            </button>
+            <button type="button" class="btn btn-whatsapp" id="btnSendWhatsApp">
+              📲 إرسال عرض السعر واتساب
+            </button>
+            <button type="button" class="btn btn-secondary workshop-only" id="btnOpenShareModal">
+              🔗 إنشاء رابط للعميل
+            </button>
+            <button type="button" class="btn btn-secondary workshop-only" id="btnSaveQuote">
+              💾 حفظ المقايسة في السجل
+            </button>
+            <button type="button" class="btn btn-whatsapp btn-full client-only hidden" id="btnClientSendWa">
+              📲 أرسل مقاساتك للورشة على واتساب لتأكيد السعر النهائي
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <footer class="site-footer">
+    <span id="footerWorkshopLine">ميزان الحديد — أداة تقدير ميزانية الجمالونات والهناجر بأسعار السوق المصري اليومية</span> •
+    الأوزان والأسعار تقديرية استرشادية قابلة للمراجعة حسب التصميم الإنشائي النهائي وفاتورة التوريد الفعلية.
+  </footer>
+
+  <!-- =========================================================
+       نسخة الطباعة الرسمية (تظهر فقط عند الطباعة / الحفظ كـ PDF)
+       ========================================================= -->
+  <section class="print-only-sheet" id="printSheet" aria-hidden="true"></section>
+
+  <!-- =========================================================
+       نافذة: جدول أسعار السوق المصري اليومية وتعديلها
+       ========================================================= -->
+  <div class="modal-backdrop" id="modalPrices" role="dialog" aria-modal="true" aria-labelledby="modalPricesTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalPricesTitle">📈 أسعار الحديد والصاج اليوم في السوق المصري</h3>
+        <button type="button" class="modal-close" data-close-modal="modalPrices">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="sparkline-box">
+          <div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">حالة ومصدر أسعار اليوم</div>
+            <div style="font-size: 0.92rem; font-weight: 800; margin-top: 2px;" id="modalPriceSource">—</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;" id="modalPriceUpdatedAt">—</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 0.73rem; color: var(--text-muted); font-weight: 700;">حركة طن الحديد المتوسط (7 أيام)</div>
+            <div id="priceSparklineWrap"></div>
+          </div>
+        </div>
+
+        <p style="margin: 0; font-size: 0.83rem; color: var(--text-secondary);">
+          يتم تحديث الأسعار يومياً تلقائياً وفق السوق المصري، ويمكنك كصاحب ورشة تعديل أي سعر أدناه ليطابق سعر التاجر الذي تتعامل معه اليوم بدقة:
+        </p>
+
+        <div class="section-label" style="margin-bottom: 2px;">أسعار طن الحديد (جنيه مصري / طن)</div>
+        <div class="price-edit-grid">
+          <div class="field-group">
+            <label for="editSteelLight">حديد خفيف (علب وزوايا)</label>
+            <input type="number" id="editSteelLight" class="form-control tabular" step="100" />
+          </div>
+          <div class="field-group">
+            <label for="editSteelMedium">حديد متوسط (كمر IPE / UPN)</label>
+            <input type="number" id="editSteelMedium" class="form-control tabular" step="100" />
+          </div>
+          <div class="field-group">
+            <label for="editSteelHeavy">حديد ثقيل (كمر HEA / IPE)</label>
+            <input type="number" id="editSteelHeavy" class="form-control tabular" step="100" />
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-bottom: 2px;">أسعار الصاج والتغطيات (جنيه مصري / م²)</div>
+        <div class="price-edit-grid">
+          <div class="field-group">
+            <label for="editSheetGalv04">صاج مجلفن معرج 0.4 مم</label>
+            <input type="number" id="editSheetGalv04" class="form-control tabular" step="5" />
+          </div>
+          <div class="field-group">
+            <label for="editSheetGalv05">صاج مجلفن معرج 0.5 مم</label>
+            <input type="number" id="editSheetGalv05" class="form-control tabular" step="5" />
+          </div>
+          <div class="field-group">
+            <label for="editSheetCol05">صاج ملون إيكون 0.5 مم</label>
+            <input type="number" id="editSheetCol05" class="form-control tabular" step="5" />
+          </div>
+          <div class="field-group">
+            <label for="editSheetCol07">صاج ملون ثقيل 0.7 مم</label>
+            <input type="number" id="editSheetCol07" class="form-control tabular" step="5" />
+          </div>
+          <div class="field-group">
+            <label for="editSheetSand5">ساندوتش بانل 5 سم</label>
+            <input type="number" id="editSheetSand5" class="form-control tabular" step="10" />
+          </div>
+          <div class="field-group">
+            <label for="editSheetSand10">ساندوتش بانل 7.5 – 10 سم</label>
+            <input type="number" id="editSheetSand10" class="form-control tabular" step="10" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btnResetMarketPrices">↻ استعادة أسعار السوق التلقائية</button>
+        <button type="button" class="btn btn-primary" id="btnSaveManualPrices">💾 حفظ أسعار اليوم</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       نافذة: إعدادات بيانات الورشة (الاسم، الهاتف، الواتساب)
+       ========================================================= -->
+  <div class="modal-backdrop" id="modalWorkshop" role="dialog" aria-modal="true" aria-labelledby="modalWorkshopTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalWorkshopTitle">⚙ بيانات ورشة الحدادة (تظهر للعملاء وفي عرض السعر)</h3>
+        <button type="button" class="modal-close" data-close-modal="modalWorkshop">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label for="wsName">اسم الورشة أو الشركة</label>
+          <input type="text" id="wsName" class="form-control" placeholder="مثال: ورشة أولاد الحاج سعيد للحدادة والجمالونات" />
+        </div>
+        <div class="field-group">
+          <label for="wsTagline">الوصف المختصر / العنوان</label>
+          <input type="text" id="wsTagline" class="form-control" placeholder="تصنيع وتركيب جميع أنواع الجمالونات والهناجر — العاشر من رمضان" />
+        </div>
+        <div class="price-edit-grid">
+          <div class="field-group">
+            <label for="wsPhone">رقم التليفون</label>
+            <input type="tel" id="wsPhone" class="form-control tabular" placeholder="010xxxxxxxx" />
+          </div>
+          <div class="field-group">
+            <label for="wsWhatsapp">رقم الواتساب (بكود مصر 20)</label>
+            <input type="tel" id="wsWhatsapp" class="form-control tabular" placeholder="2010xxxxxxxx" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="wsNotes">شروط وملاحظات ثابتة أسفل عرض السعر المطبوع</label>
+          <textarea id="wsNotes" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modalWorkshop">إلغاء</button>
+        <button type="button" class="btn btn-primary" id="btnSaveWorkshop">💾 حفظ بيانات الورشة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       نافذة: مشاركة رابط للعميل
+       ========================================================= -->
+  <div class="modal-backdrop" id="modalShare" role="dialog" aria-modal="true" aria-labelledby="modalShareTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalShareTitle">🔗 إنشاء رابط مباشر لمشاركته مع العميل</h3>
+        <button type="button" class="modal-close" data-close-modal="modalShare">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin: 0; font-size: 0.86rem; color: var(--text-secondary);">
+          أرسل هذا الرابط لأي عميل يسألك عن تكلفة جمالون — سيفتح له الموقع بوضع <strong>العميل فقط</strong> (بدون ظهور خانة المصنعية الخاصة بك)، ويحسب له ميزانية الخامات بأسعار اليوم، وعندما يضغط "إرسال للورشة" يرسل لك مقاساته على واتساب مع رابط تفتحه أنت فتضيف مصنعيتك فوراً!
+        </p>
+
+        <div class="field-group">
+          <label for="shareLinkClient">1. رابط الحاسبة العام للعملاء (العميل يدخل مقاساته بنفسه)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="shareLinkClient" class="form-control" readonly dir="ltr" />
+            <button type="button" class="btn btn-primary" data-copy-target="shareLinkClient">نسخ</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="shareLinkPrefilled">2. رابط المقايسة الحالية بالمقاسات المضبوطة الآن</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="shareLinkPrefilled" class="form-control" readonly dir="ltr" />
+            <button type="button" class="btn btn-secondary" data-copy-target="shareLinkPrefilled">نسخ</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modalShare">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       نافذة: سجل المقايسات المحفوظة
+       ========================================================= -->
+  <div class="modal-backdrop" id="modalHistory" role="dialog" aria-modal="true" aria-labelledby="modalHistoryTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalHistoryTitle">📋 سجل المقايسات المحفوظة</h3>
+        <button type="button" class="modal-close" data-close-modal="modalHistory">&times;</button>
+      </div>
+      <div class="modal-body" id="savedQuotesList"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modalHistory">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- إشعار Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/prices.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/blueprint.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
